@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Pinjam Buku | Smart Library</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <main class="page">
+      <section class="hero">
+        <h1>Pinjam Buku</h1>
+        <p class="hero-copy">Pilih ID dari daftar, lalu lakukan pinjam atau pengembalian buku.</p>
+      </section>
+
+      <section class="card">
+        <div class="section-heading">
+          <div>
+            <h2>Daftar Buku</h2>
+            <p class="section-copy">Diurutkan dari buku yang paling sering dipinjam.</p>
+          </div>
+          <button id="refreshButton" class="secondary-button" type="button">Refresh</button>
+        </div>
+
+        <p id="booksFeedback" class="feedback info" role="status">Memuat data buku...</p>
+
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>ID Buku</th>
+                <th>Judul Buku</th>
+                <th>Nama Penulis</th>
+                <th>Kategori</th>
+                <th>Sisa Stok</th>
+              </tr>
+            </thead>
+            <tbody id="booksTableBody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="section-heading">
+          <div>
+            <h2>Form Pinjam</h2>
+            <p class="section-copy">Tenggat pinjam akan dibuat otomatis oleh sistem.</p>
+          </div>
+        </div>
+
+        <form id="loanForm" class="loan-form">
+          <label class="field">
+            <span>ID Buku</span>
+            <input
+              id="bookIdInput"
+              name="book_id"
+              type="text"
+              list="bookOptions"
+              placeholder="Pilih ID buku"
+              required
+            />
+          </label>
+
+          <label class="field">
+            <span>ID Member</span>
+            <input
+              id="memberIdInput"
+              name="member_id"
+              type="text"
+              list="memberOptions"
+              placeholder="Pilih ID member"
+              required
+            />
+          </label>
+
+          <button id="loanSubmitButton" class="primary-button" type="submit">Pinjam Buku</button>
+        </form>
+
+        <p id="loanFeedback" class="feedback" role="status" aria-live="polite"></p>
+      </section>
+
+      <section class="card">
+        <div class="section-heading">
+          <div>
+            <h2>Form Pengembalian</h2>
+            <p class="section-copy">Gunakan ID buku dan ID member yang sedang aktif meminjam.</p>
+          </div>
+        </div>
+
+        <form id="returnForm" class="loan-form">
+          <label class="field">
+            <span>ID Buku</span>
+            <input
+              id="returnBookIdInput"
+              name="book_id"
+              type="text"
+              list="bookOptions"
+              placeholder="Pilih ID buku"
+              required
+            />
+          </label>
+
+          <label class="field">
+            <span>ID Member</span>
+            <input
+              id="returnMemberIdInput"
+              name="member_id"
+              type="text"
+              list="memberOptions"
+              placeholder="Pilih ID member"
+              required
+            />
+          </label>
+
+          <button id="returnSubmitButton" class="primary-button" type="submit">Kembalikan Buku</button>
+        </form>
+
+        <p id="returnFeedback" class="feedback" role="status" aria-live="polite"></p>
+      </section>
+
+      <section class="card">
+        <div class="section-heading">
+          <div>
+            <h2>Sedang Dipinjam</h2>
+            <p class="section-copy">Daftar pinjaman yang masih aktif beserta tenggatnya.</p>
+          </div>
+        </div>
+
+        <p id="activeLoansFeedback" class="feedback info" role="status">Memuat data pinjaman...</p>
+
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>ID Buku</th>
+                <th>Judul Buku</th>
+                <th>ID Member</th>
+                <th>Nama Member</th>
+                <th>Tenggat</th>
+              </tr>
+            </thead>
+            <tbody id="activeLoansTableBody"></tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+
+    <datalist id="bookOptions"></datalist>
+    <datalist id="memberOptions"></datalist>
+
+    <script type="module" src="/app.js"></script>
+  </body>
+</html>

@@ -4,10 +4,26 @@ export const BookModel = {
   // Mengambil semua buku dengan nama penulis dan kategori (JOIN)
   async getAll() {
     const query = `
-      SELECT b.*, a.name as author_name, c.name as category_name 
+      SELECT
+        b.*,
+        a.name as author_name,
+        c.name as category_name,
+        COUNT(l.id)::int as loan_count
       FROM books b
       LEFT JOIN authors a ON b.author_id = a.id
       LEFT JOIN categories c ON b.category_id = c.id
+      LEFT JOIN loans l ON l.book_id = b.id
+      GROUP BY
+        b.id,
+        b.isbn,
+        b.title,
+        b.author_id,
+        b.category_id,
+        b.total_copies,
+        b.available_copies,
+        a.name,
+        c.name
+      ORDER BY loan_count DESC, b.title ASC
     `;
     const result = await pool.query(query);
     return result.rows;

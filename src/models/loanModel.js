@@ -52,10 +52,10 @@ export const LoanModel = {
 
       const resolvedDueDate = due_date || getDefaultDueDate();
 
-      // 2. Kurangi stok buku
+      // 3. Kurangi stok buku
       await client.query('UPDATE books SET available_copies = available_copies - 1 WHERE id = $1', [normalizedBookId]);
 
-      // 3. Catat transaksi peminjaman
+      // 4. Catat transaksi peminjaman
       const loanQuery = `
         INSERT INTO loans (book_id, member_id, due_date) 
         VALUES ($1, $2, $3) RETURNING *
@@ -74,6 +74,7 @@ export const LoanModel = {
     }
   },
 
+  // Tugas 3: Refactor returnLoan — transaksi eksplisit dengan semua kriteria
   async returnLoan(book_id, member_id) {
     const client = await pool.connect();
     let transactionStarted = false;
@@ -84,6 +85,7 @@ export const LoanModel = {
       await client.query('BEGIN');
       transactionStarted = true;
 
+      // 1. Validasi buku ada
       const bookCheck = await client.query(
         'SELECT id, total_copies, available_copies FROM books WHERE id = $1 FOR UPDATE',
         [normalizedBookId]
@@ -92,11 +94,13 @@ export const LoanModel = {
         throw new Error('ID buku tidak ditemukan.');
       }
 
+      // 2. Validasi member ada
       const memberCheck = await client.query('SELECT id FROM members WHERE id = $1', [normalizedMemberId]);
       if (memberCheck.rows.length === 0) {
         throw new Error('ID member tidak ditemukan.');
       }
 
+      // 3. Cari peminjaman aktif
       const activeLoanCheck = await client.query(
         `
           SELECT id
@@ -116,28 +120,41 @@ export const LoanModel = {
         throw new Error('Tidak ada peminjaman aktif untuk ID buku dan ID member tersebut.');
       }
 
-      await client.query(
+      const loanId = activeLoanCheck.rows[0].id;
+
+      // 4. Ubah status peminjaman menjadi RETURNED dan isi return_date
+      const updateLoan = await client.query(
+        `
+          UPDATE loans
+          SET status = 'RETURNED',
+              return_date = CURRENT_DATE
+          WHERE id = $1
+          RETURNING *
+        `,
+        [loanId]
+      );
+
+      if (updateLoan.rowCount === 0) {
+        throw new Error('Gagal memperbarui data peminjaman. Silakan coba lagi.');
+      }
+
+      // 5. Tambah kembali available_copies sebanyak 1 (tidak melebihi total_copies)
+      const updateStock = await client.query(
         `
           UPDATE books
           SET available_copies = LEAST(total_copies, available_copies + 1)
           WHERE id = $1
+          RETURNING available_copies
         `,
         [normalizedBookId]
       );
 
-      const result = await client.query(
-        `
-          UPDATE loans
-          SET return_date = CURRENT_DATE,
-              status = 'RETURNED'
-          WHERE id = $1
-          RETURNING *
-        `,
-        [activeLoanCheck.rows[0].id]
-      );
+      if (updateStock.rowCount === 0) {
+        throw new Error('Gagal memperbarui stok buku. Proses dibatalkan.');
+      }
 
       await client.query('COMMIT');
-      return result.rows[0];
+      return updateLoan.rows[0];
     } catch (error) {
       if (transactionStarted) {
         await client.query('ROLLBACK');
